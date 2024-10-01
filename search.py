@@ -39,7 +39,8 @@ class KMPAlgorithm:
                                 for sub_str in self._sub_string]
 
     def search(self) -> Optional[Union[tuple[int, ...], dict[str, tuple[int, ...]]]]:
-        result = dict().fromkeys(self._sub_string)
+        """Search function. Uses KMP algorithm"""
+        result = {}.fromkeys(self._sub_string)
         if self._method == 'first':
             for sub_str in self._sub_string:
                 result[sub_str] = self._search_first(sub_str)
@@ -132,17 +133,16 @@ class KMPAlgorithm:
     def _convert_result(result) -> Optional[Union[tuple[int, ...], dict[str, tuple[int, ...]]]]:
         if len(result) == 0:
             return None
-        elif len(result) == 1:
+        if len(result) == 1:
             result = result[list(result.keys())[0]]
             if not result:
                 return None
             return result
-        else:
-            all_are_none = all([sub_res is None
-                                for sub_res in result.values()])
-            if all_are_none:
-                return None
-            return result
+
+        all_are_none = all(sub_res is None for sub_res in result.values())
+        if all_are_none:
+            return None
+        return result
 
     @staticmethod
     def _validate(string: str,
@@ -156,10 +156,8 @@ class KMPAlgorithm:
         if not isinstance(sub_string, str):
             if not isinstance(sub_string, (list, tuple)):
                 raise TypeError('sub_string must be of type str')
-            else:
-                if not all([isinstance(sub_str, str)
-                            for sub_str in sub_string]):
-                    raise TypeError('sub_string list elements must be of type str')
+            if not all(isinstance(sub_str, str) for sub_str in sub_string):
+                raise TypeError('sub_string list elements must be of type str')
 
         if not isinstance(case_sensitivity, bool):
             raise TypeError('case sensitivity must be of type bool')
@@ -204,12 +202,12 @@ class _MyArgumentParser(argparse.ArgumentParser):
     def _check_string(value: str) -> str:
         if re.match(r'^(.+)\/([^\/]+)$', value):
             try:
-                with open(value, 'r') as f:
+                with open(value, 'r', encoding='utf-8') as f:
                     return f.read()
-            except FileNotFoundError:
-                raise argparse.ArgumentTypeError('File not found')
-            except PermissionError:
-                raise argparse.ArgumentTypeError('Permission denied')
+            except FileNotFoundError as exc:
+                raise argparse.ArgumentTypeError('File not found') from exc
+            except PermissionError as exc:
+                raise argparse.ArgumentTypeError('Permission denied') from exc
         return value
 
     @staticmethod
@@ -221,8 +219,8 @@ class _MyArgumentParser(argparse.ArgumentParser):
             if int_value < 1:
                 raise argparse.ArgumentTypeError("count must be greater than 0")
             return int_value
-        except ValueError:
-            raise argparse.ArgumentTypeError("count must be natural number or None")
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError("count must be natural number or None") from exc
 
 
 if __name__ == '__main__':
