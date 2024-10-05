@@ -1,8 +1,8 @@
 """Search module"""
 
 import argparse
+import os
 import random
-import re
 from typing import Union, Optional
 
 from rich.console import Console
@@ -185,7 +185,7 @@ class _MyArgumentParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_argument('string',
-                          type=str,
+                          type=self._check_string,
                           help='String where search')
         self.add_argument('sub_string',
                           nargs='*',
@@ -206,7 +206,8 @@ class _MyArgumentParser(argparse.ArgumentParser):
 
     @staticmethod
     def _check_string(value: str) -> str:
-        if re.match(r'^(.+)\/([^\/]+)$', value):
+        print(value)
+        if os.path.isabs(value):
             try:
                 with open(value, 'r', encoding='utf-8') as f:
                     return f.read()
@@ -261,12 +262,14 @@ class _ResultPrinter:
         color = self.generate_colors(1)[0]
         for i in self._result:
             start_index = i
-            end_index = i + len(self._sub_string)
+            end_index = i + len(self._sub_string) - 1
             text_list[start_index] = f'[{color}]{text_list[start_index]}'
             text_list[end_index] = f'{text_list[end_index]}[/{color}]'
-        text = "".join(text_list)
+        text = ''.join(text_list)
+        first_10_lines = 'First 10 lines:\n'
+        first_10_lines += '\n'.join(text.split('\n')[:10])
         console = Console()
-        console.print(text)
+        console.print(first_10_lines)
 
     def _print_dict(self):
         colors = (color
@@ -277,8 +280,6 @@ class _ResultPrinter:
             sub_str_len = len(sub_str)
             index_pairs_tuple.append(tuple((i, i + sub_str_len - 1) for i in index_tuple))
         index_pairs_tuple = tuple(index_pairs_tuple)
-        # print(index_pairs_tuple)
-        # return
 
         text_list = list(self._string)
         for pairs_tuple, color in zip(index_pairs_tuple, colors):
@@ -288,8 +289,10 @@ class _ResultPrinter:
                 text_list[start_index] = f'[{color}]{text_list[start_index]}'
                 text_list[end_index] = f'{text_list[end_index]}[/{color}]'
         text = ''.join(text_list)
+        first_10_lines = 'First 10 lines:\n'
+        first_10_lines += '\n'.join(text.split('\n')[:10])
         console = Console()
-        console.print(text)
+        console.print(first_10_lines)
 
     @staticmethod
     def generate_colors(number_of_colors: int) -> list[str]:
