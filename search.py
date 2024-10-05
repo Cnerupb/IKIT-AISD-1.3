@@ -1,8 +1,11 @@
 """Search module"""
 
 import argparse
+import random
 import re
 from typing import Union, Optional
+
+from rich.console import Console
 
 
 def search(string: str,
@@ -18,6 +21,7 @@ def search(string: str,
 
 class KMPAlgorithm:
     """Class uses Knuth-Morris-Pratt algorithm to search sub_strings in string"""
+
     def __init__(self,
                  string: str,
                  sub_string: Union[str, list[str]],
@@ -101,7 +105,8 @@ class KMPAlgorithm:
                 if result_counter == self._count:
                     break
                 j = pi_list[j - 1]
-            elif i < string_len and sub_string[sub_string_len - 1 - j] != self._string[string_len - 1 - i]:
+            elif (i < string_len
+                  and sub_string[sub_string_len - 1 - j] != self._string[string_len - 1 - i]):
                 if j != 0:
                     j = pi_list[j - 1]
                 else:
@@ -175,7 +180,8 @@ class KMPAlgorithm:
 
 
 class _MyArgumentParser(argparse.ArgumentParser):
-    """Class for parsing args from CLI"""
+    """Class used for parsing args from CLI"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_argument('string',
@@ -223,8 +229,90 @@ class _MyArgumentParser(argparse.ArgumentParser):
             raise argparse.ArgumentTypeError("count must be natural number or None") from exc
 
 
+class _ResultPrinter:
+    """Class used for printing colored result."""
+
+    def __init__(self,
+                 result: Optional[Union[tuple[int, ...], dict[str, tuple[int, ...]]]],
+                 string: str,
+                 sub_string: Union[str, list[str]]):
+        self._result = result
+        self._string = string
+        self._sub_string = sub_string
+
+        if isinstance(self._sub_string, str):
+            self._sub_string: list[str] = [self._sub_string]
+
+    def print(self):
+        """Prints colored result to Console."""
+        if self._result is None:
+            self._print_none()
+        if isinstance(self._result, tuple):
+            self._print_tuple()
+        if isinstance(self._result, dict):
+            self._print_dict()
+
+    def _print_none(self):
+        console = Console()
+        console.print(self._result)
+
+    def _print_tuple(self):
+        text_list = list(self._string)
+        color = self.generate_colors(1)[0]
+        for i in self._result:
+            start_index = i
+            end_index = i + len(self._sub_string)
+            text_list[start_index] = f'[{color}]{text_list[start_index]}'
+            text_list[end_index] = f'{text_list[end_index]}[/{color}]'
+        text = "".join(text_list)
+        console = Console()
+        console.print(text)
+
+    def _print_dict(self):
+        colors = (color
+                  for color in self.generate_colors(len(self._result)))
+        index_pairs_tuple = []
+        # Считаем что нету подстрок, которые являются подстроками других подстрок
+        for sub_str, index_tuple in self._result.items():
+            sub_str_len = len(sub_str)
+            index_pairs_tuple.append(tuple((i, i + sub_str_len - 1) for i in index_tuple))
+        index_pairs_tuple = tuple(index_pairs_tuple)
+        # print(index_pairs_tuple)
+        # return
+
+        text_list = list(self._string)
+        for pairs_tuple, color in zip(index_pairs_tuple, colors):
+            for pair in pairs_tuple:
+                start_index = pair[0]
+                end_index = pair[1]
+                text_list[start_index] = f'[{color}]{text_list[start_index]}'
+                text_list[end_index] = f'{text_list[end_index]}[/{color}]'
+        text = ''.join(text_list)
+        console = Console()
+        console.print(text)
+
+    @staticmethod
+    def generate_colors(number_of_colors: int) -> list[str]:
+        """
+        Generates colors list of HEX format.
+        :param number_of_colors: number of colors to generate. Maximus is 1.7 million
+        :return: list of colors in string format
+        """
+        if not isinstance(number_of_colors, int):
+            raise TypeError('number_of_colors must be of type int')
+        if number_of_colors > 1_700_000:
+            raise ValueError("Number of colors must be less than 1.7 million")
+        color_list = ["#" + ''.join([random.choice('0123456789ABCDEF')
+                                     for j in range(6)])
+                      for i in range(number_of_colors)]
+        return color_list
+
+
 if __name__ == '__main__':
     parser = _MyArgumentParser()
     args = parser.parse_args()
 
-    print(search(args.string, args.sub_string, args.case_sensitivity, args.method, args.count))
+    result = search(args.string, args.sub_string, args.case_sensitivity, args.method, args.count)
+
+    result_printer = _ResultPrinter(result, args.string, args.sub_string)
+    result_printer.print()
