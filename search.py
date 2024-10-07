@@ -9,6 +9,11 @@ from typing import Union, Optional
 from rich.console import Console
 
 def time_of_function(function):
+    """
+    Counts time of function runtime in seconds
+    :param function: function to count
+    :return: None
+    """
     def wrapped(*args):
         start_time = time.perf_counter_ns()
         res = function(*args)
