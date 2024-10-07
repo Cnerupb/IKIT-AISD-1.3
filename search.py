@@ -3,11 +3,23 @@
 import argparse
 import os
 import random
+import time
 from typing import Union, Optional
 
 from rich.console import Console
 
+def time_of_function(function):
+    def wrapped(*args):
+        start_time = time.perf_counter_ns()
+        res = function(*args)
+        end_time = time.perf_counter_ns()
+        run_time = (end_time - start_time) / 10**9
+        print(f'Run time: {run_time:.9f} seconds')
+        return res
+    return wrapped
 
+
+@time_of_function
 def search(string: str,
            sub_string: Union[str, list[str]],
            case_sensitivity: bool = False,
@@ -278,11 +290,15 @@ class _ResultPrinter:
         # Считаем что нету подстрок, которые являются подстроками других подстрок
         for sub_str, index_tuple in self._result.items():
             sub_str_len = len(sub_str)
-            index_pairs_tuple.append(tuple((i, i + sub_str_len - 1) for i in index_tuple))
+            if index_tuple:
+                index_pairs_tuple.append(tuple((i, i + sub_str_len - 1)
+                                                for i in index_tuple))
+            else:
+                index_pairs_tuple.append(tuple())
         index_pairs_tuple = tuple(index_pairs_tuple)
 
         text_list = list(self._string)
-        for pairs_tuple, color in zip(index_pairs_tuple, colors):
+        for pairs_tuple, color in zip(index_pairs_tuple, colors): # print colorized
             for pair in pairs_tuple:
                 start_index = pair[0]
                 end_index = pair[1]
