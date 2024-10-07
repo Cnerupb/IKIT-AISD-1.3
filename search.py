@@ -31,7 +31,15 @@ def search(string: str,
            method: str = 'first',
            count: Optional[int] = None
            ) -> Optional[Union[tuple[int, ...], dict[str, tuple[int, ...]]]]:
-    """Search function"""
+    """
+    Search function
+    :param string: string where search
+    :param sub_string: string which search
+    :param case_sensitivity: case sensitivity
+    :param method: search starts with first index or last index
+    :param count: amount of each sub string to search for
+    :return: None
+    """
     kmp_alg = KMPAlgorithm(string, sub_string, case_sensitivity, method, count)
     return kmp_alg.search()
 
