@@ -285,9 +285,10 @@ class _ResultPrinter:
     def _print_tuple(self):
         text_list = list(self._string)
         color = self.generate_colors(1)[0]
+        # print(self._sub_string)
         for i in self._result:
             start_index = i
-            end_index = i + len(self._sub_string) - 1
+            end_index = i + len(self._sub_string[0]) - 1
             text_list[start_index] = f'[{color}]{text_list[start_index]}'
             text_list[end_index] = f'{text_list[end_index]}[/{color}]'
         text = ''.join(text_list)
